@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="A clean 156-card tarot draw board: every card upright and reversed." />
   <meta name="theme-color" content="#111111" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=DM+Mono:wght@400;500&family=Jost:wght@700&display=swap" rel="stylesheet" />
   <title>tarot-156</title>
   <style>
     * {
@@ -25,6 +28,9 @@
       --pentacles: #76a344;
       --rx: #e59b2a;
       --focus: #f1d36f;
+      --font-body: "Jost", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-title: "Cormorant Garamond", Georgia, serif;
+      --font-mono: "DM Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
       color-scheme: dark light;
     }
 
@@ -50,8 +56,9 @@
       padding: 28px 16px 36px;
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: var(--font-body);
       font-size: 15px;
+      font-weight: 700;
       line-height: 1.4;
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
@@ -74,7 +81,7 @@
       margin: 0;
       color: var(--muted);
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 700;
       letter-spacing: 0;
     }
 
@@ -83,9 +90,9 @@
     .log-label,
     .log-number,
     .log-orientation,
-    .log-limit,
-    button {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    .log-limit {
+      font-family: var(--font-body);
+      font-weight: 700;
       letter-spacing: 0;
     }
 
@@ -112,14 +119,15 @@
     .empty {
       color: var(--muted);
       font-size: 15px;
-      font-weight: 400;
+      font-weight: 700;
     }
 
     .card-name {
       color: var(--text);
-      font-size: 22px;
+      font-family: var(--font-title);
+      font-size: 28px;
       font-weight: 500;
-      line-height: 1.18;
+      line-height: 1.02;
     }
 
     .orientation {
@@ -182,27 +190,46 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 18px;
+      margin-top: 20px;
     }
 
     .reset {
-      min-height: 32px;
-      padding: 6px 12px;
-      color: var(--muted);
-      background: transparent;
+      min-height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 11px 6px 10px;
+      color: color-mix(in srgb, var(--muted), var(--text) 16%);
+      background: color-mix(in srgb, var(--panel), transparent 48%);
       border: 1px solid var(--line);
-      border-radius: 6px;
+      border-radius: 999px;
       cursor: pointer;
+      font-family: var(--font-mono);
       font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1;
+      appearance: none;
+      -webkit-font-smoothing: antialiased;
+      transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 80ms ease;
     }
 
     .reset:hover {
       color: var(--text);
       background: var(--panel);
+      border-color: color-mix(in srgb, var(--line), var(--text) 20%);
     }
 
     .reset:active {
       transform: translateY(1px);
+    }
+
+    .reset-icon {
+      width: 13px;
+      height: 13px;
+      display: block;
+      flex: 0 0 auto;
     }
 
     .log-section {
@@ -244,7 +271,7 @@
       overflow-wrap: anywhere;
       color: var(--text);
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 700;
       line-height: 1.2;
     }
 
@@ -299,7 +326,13 @@
     <div class="board" id="board" aria-label="Tarot cards"></div>
 
     <div class="controls">
-      <button class="reset" type="button" id="reset">reshuffle</button>
+      <button class="reset" type="button" id="reset" aria-label="Reshuffle deck">
+        <svg class="reset-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M12.5 4.9A5 5 0 1 0 13 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M12.8 2.2v3.2H9.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>reshuffle</span>
+      </button>
     </div>
 
     <section class="log-section" id="logSection" aria-label="Pulled cards">
