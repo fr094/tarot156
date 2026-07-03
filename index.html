@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Tarot-156 is a compact tarot draw board with all 78 cards represented upright and reversed."
+  />
+  <meta name="theme-color" content="#111111" />
+  <title>tarot-156</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #10100f;
+      --panel: #1b1a18;
+      --panel-soft: #171614;
+      --border: rgba(255, 255, 255, 0.11);
+      --text: #f2eee7;
+      --muted: rgba(242, 238, 231, 0.54);
+      --dim: rgba(242, 238, 231, 0.18);
+      --focus: #f0c75d;
+      --major: #8d83e8;
+      --wands: #ef9f27;
+      --cups: #378add;
+      --swords: #1d9e75;
+      --pentacles: #78a43a;
+      --radius: 8px;
+      color-scheme: dark light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f2ed;
+        --panel: #ffffff;
+        --panel-soft: #ebe8df;
+        --border: rgba(18, 18, 18, 0.12);
+        --text: #1c1a17;
+        --muted: rgba(28, 26, 23, 0.58);
+        --dim: rgba(28, 26, 23, 0.19);
+        --focus: #8f6411;
+      }
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      padding: 32px 20px 44px;
+    }
+
+    main {
+      width: min(100%, 680px);
+      margin: 0 auto;
+    }
+
+    .draw-panel {
+      min-height: 96px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 22px 18px;
+      margin-bottom: 16px;
+      text-align: center;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top-width: 2px;
+      border-radius: var(--radius);
+      transition: border-color 180ms ease, border-top-color 180ms ease;
+    }
+
+    .status-text,
+    .orientation,
+    .counter,
+    .log-label,
+    .log-number,
+    .log-orientation,
+    .log-cap,
+    button {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      letter-spacing: 0;
+    }
+
+    .status-text {
+      font-size: 11px;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    .card-name {
+      color: var(--text);
+      font-size: clamp(20px, 5vw, 30px);
+      font-weight: 560;
+      line-height: 1.15;
+    }
+
+    .orientation {
+      font-size: 12px;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(13, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      aspect-ratio: 1 / 1;
+    }
+
+    .dot {
+      width: clamp(18px, 4.8vw, 22px);
+      height: clamp(18px, 4.8vw, 22px);
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: var(--dim);
+      cursor: pointer;
+      transition: background 180ms ease, opacity 120ms ease, transform 150ms ease, box-shadow 120ms ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .dot:hover:not(:disabled) {
+      opacity: 0.66;
+      transform: scale(1.1);
+    }
+
+    .dot:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .dot:disabled {
+      cursor: default;
+      opacity: 1;
+      transform: scale(0.75);
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .counter {
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    button {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 7px 12px;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      text-transform: uppercase;
+      transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 80ms ease;
+    }
+
+    button:hover {
+      color: var(--text);
+      background: var(--panel-soft);
+      border-color: color-mix(in srgb, var(--border), var(--text) 18%);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .log-section {
+      display: none;
+      margin-top: 28px;
+    }
+
+    .log-label {
+      margin-bottom: 10px;
+      color: var(--dim);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .log {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 40px;
+      padding: 8px 13px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left-width: 3px;
+      border-radius: var(--radius);
+      animation: fadein 180ms ease;
+    }
+
+    @keyframes fadein {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .log-number {
+      min-width: 20px;
+      color: var(--dim);
+      font-size: 10px;
+    }
+
+    .log-name {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 540;
+      line-height: 1.25;
+    }
+
+    .log-orientation {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .log-cap {
+      display: none;
+      margin-top: 10px;
+      color: var(--dim);
+      font-size: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 22px 14px 34px;
+      }
+
+      .board {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .draw-panel {
+        min-height: 88px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .board {
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+      }
+
+      .footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main aria-label="tarot-156">
+    <section class="draw-panel" id="current" aria-live="polite">
+      <span class="status-text">awaiting draw</span>
+    </section>
+
+    <div class="board" id="grid" aria-label="Tarot draw board"></div>
+
+    <div class="footer">
+      <span class="counter" id="count">0 / 156 drawn</span>
+      <button type="button" id="reshuffle">
+        <span aria-hidden="true">&#8634;</span>
+        <span>reshuffle</span>
+      </button>
+    </div>
+
+    <section class="log-section" id="log-section" aria-label="Pulled cards">
+      <div class="log-label">pulled cards</div>
+      <div class="log" id="log"></div>
+      <div class="log-cap" id="log-cap">21 card limit reached</div>
+    </section>
+  </main>
+
+  <script>
+    const CARDS = [
+      ...[
+        "The Fool",
+        "The Magician",
+        "The High Priestess",
+        "The Empress",
+        "The Emperor",
+        "The Hierophant",
+        "The Lovers",
+        "The Chariot",
+        "Strength",
+        "The Hermit",
+        "Wheel of Fortune",
+        "Justice",
+        "The Hanged Man",
+        "Death",
+        "Temperance",
+        "The Devil",
+        "The Tower",
+        "The Star",
+        "The Moon",
+        "The Sun",
+        "Judgement",
+        "The World"
+      ].map((name) => ({ name, suit: "major" })),
+      ...["Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Page", "Knight", "Queen", "King"]
+        .flatMap((rank) => [
+          { name: rank + " of Wands", suit: "wands" },
+          { name: rank + " of Cups", suit: "cups" },
+          { name: rank + " of Swords", suit: "swords" },
+          { name: rank + " of Pentacles", suit: "pentacles" }
+        ])
+    ];
+
+    const DECK = CARDS.flatMap((card) => [
+      { ...card, reversed: false },
+      { ...card, reversed: true }
+    ]);
+
+    const SUIT_COLORS = {
+      major: "#8d83e8",
+      wands: "#ef9f27",
+      cups: "#378add",
+      swords: "#1d9e75",
+      pentacles: "#78a43a"
+    };
+
+    const state = {
+      drawn: 0,
+      logged: 0
+    };
+
+    const elements = {
+      count: document.getElementById("count"),
+      current: document.getElementById("current"),
+      grid: document.getElementById("grid"),
+      log: document.getElementById("log"),
+      logCap: document.getElementById("log-cap"),
+      logSection: document.getElementById("log-section"),
+      reshuffle: document.getElementById("reshuffle")
+    };
+
+    function shuffle(cards) {
+      const copy = [...cards];
+
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+      }
+
+      return copy;
+    }
+
+    function resetCurrent() {
+      elements.current.style.borderTopColor = "var(--border)";
+      elements.current.innerHTML = '<span class="status-text">awaiting draw</span>';
+    }
+
+    function updateCount() {
+      elements.count.textContent = state.drawn + " / 156 drawn";
+    }
+
+    function renderCurrent(card, color) {
+      const name = document.createElement("span");
+      name.className = "card-name";
+      name.textContent = card.name;
+
+      const orientation = document.createElement("span");
+      orientation.className = "orientation";
+      orientation.style.color = card.reversed ? SUIT_COLORS.wands : color;
+      orientation.textContent = card.reversed ? "\u25BD reversed" : "\u25B3 upright";
+
+      elements.current.replaceChildren(name, orientation);
+      elements.current.style.borderTopColor = color;
+    }
+
+    function appendLog(card, color) {
+      if (state.logged >= 21) {
+        return;
+      }
+
+      state.logged += 1;
+      elements.logSection.style.display = "block";
+
+      const row = document.createElement("div");
+      row.className = "log-row";
+      row.style.borderLeftColor = color;
+
+      const number = document.createElement("span");
+      number.className = "log-number";
+      number.textContent = String(state.logged);
+
+      const name = document.createElement("span");
+      name.className = "log-name";
+      name.textContent = card.name;
+
+      const orientation = document.createElement("span");
+      orientation.className = "log-orientation";
+      orientation.style.color = card.reversed ? SUIT_COLORS.wands : color;
+      orientation.textContent = card.reversed ? "\u25BD rx" : "\u25B3 up";
+
+      row.append(number, name, orientation);
+      elements.log.appendChild(row);
+
+      if (state.logged === 21) {
+        elements.logCap.style.display = "block";
+      }
+    }
+
+    function draw(card, dot) {
+      if (dot.disabled) {
+        return;
+      }
+
+      const color = SUIT_COLORS[card.suit];
+      dot.disabled = true;
+      dot.style.background = color;
+      dot.setAttribute("aria-label", card.name + (card.reversed ? ", reversed, drawn" : ", upright, drawn"));
+
+      state.drawn += 1;
+      updateCount();
+      renderCurrent(card, color);
+      appendLog(card, color);
+    }
+
+    function init() {
+      state.drawn = 0;
+      state.logged = 0;
+      updateCount();
+      resetCurrent();
+
+      elements.grid.replaceChildren();
+      elements.log.replaceChildren();
+      elements.logCap.style.display = "none";
+      elements.logSection.style.display = "none";
+
+      shuffle(DECK).forEach((card, index) => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+
+        const dot = document.createElement("button");
+        dot.className = "dot";
+        dot.type = "button";
+        dot.setAttribute("aria-label", "Draw hidden tarot card " + (index + 1));
+        dot.addEventListener("click", () => draw(card, dot));
+
+        cell.appendChild(dot);
+        elements.grid.appendChild(cell);
+      });
+    }
+
+    elements.reshuffle.addEventListener("click", init);
+    init();
+  </script>
+</body>
+</html>
