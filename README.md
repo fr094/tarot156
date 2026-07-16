@@ -10,6 +10,8 @@ A dependency-free static tarot draw website for Vercel.
 
 The site entry point is `index.html`.
 
+The copy button copies pulled cards in draw order as plain text, one card per line. Reversed cards get `rx`.
+
 ## Meaning Notes
 
-The upright and reversed one-liners are neutral keyword-style summaries grounded in Rider-Waite-Smith card meanings, especially A. E. Waite's *The Pictorial Key to the Tarot*. They are written as plain meanings, not advice prompts.
+The upright and reversed one-liners are plain-English summaries grounded in Rider-Waite-Smith card meanings, especially A. E. Waite's *The Pictorial Key to the Tarot*. They state the card meaning simply and avoid advice wording.

@@ -181,7 +181,7 @@
     }
 
     .dot:focus-visible,
-    .reset:focus-visible {
+    .action-button:focus-visible {
       outline: 2px solid var(--focus);
       outline-offset: 3px;
     }
@@ -190,10 +190,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
       margin-top: 20px;
     }
 
-    .reset {
+    .action-button {
       min-height: 30px;
       display: inline-flex;
       align-items: center;
@@ -215,15 +216,20 @@
       transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 80ms ease;
     }
 
-    .reset:hover {
+    .action-button:hover:not(:disabled) {
       opacity: 0.7;
     }
 
-    .reset:active {
+    .action-button:active:not(:disabled) {
       transform: translateY(1px);
     }
 
-    .reset-icon {
+    .action-button:disabled {
+      cursor: default;
+      opacity: 0.34;
+    }
+
+    .button-icon {
       width: 13px;
       height: 13px;
       display: block;
@@ -344,12 +350,19 @@
     <div class="board" id="board" aria-label="Tarot cards"></div>
 
     <div class="controls">
-      <button class="reset" type="button" id="reset" aria-label="Reshuffle deck">
-        <svg class="reset-icon" viewBox="0 0 16 16" aria-hidden="true">
+      <button class="action-button reset" type="button" id="reset" aria-label="Reshuffle deck">
+        <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
           <path d="M12.5 4.9A5 5 0 1 0 13 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
           <path d="M12.8 2.2v3.2H9.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <span>reshuffle</span>
+      </button>
+      <button class="action-button copy" type="button" id="copy" aria-label="Copy pulled card names" disabled>
+        <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <rect x="5" y="4" width="8" height="10" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4" />
+          <path d="M3 11V3.2C3 2.5 3.5 2 4.2 2H10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span id="copyText">copy</span>
       </button>
     </div>
 
@@ -399,316 +412,316 @@
 
     const CARD_MEANINGS = {
       "The Fool": {
-        up: "Innocence, freedom, folly, reckless beginnings.",
-        rx: "Negligence, carelessness, apathy, vanity."
+        up: "A fresh start with innocence, freedom, and a bit of recklessness.",
+        rx: "Careless energy, where someone is not thinking things through."
       },
       "The Magician": {
-        up: "Skill, willpower, diplomacy, focused action.",
-        rx: "Disquiet, disgrace, manipulation, scattered will."
+        up: "Skill, focus, and having what is needed to make something happen.",
+        rx: "Scattered power, manipulation, or skill being used badly."
       },
       "The High Priestess": {
-        up: "Mystery, hidden knowledge, intuition, silence.",
-        rx: "Surface knowledge, conceit, passion, secrets exposed."
+        up: "Hidden knowledge, quiet intuition, and things not yet revealed.",
+        rx: "Shallow understanding, secrets leaking, or intuition being ignored."
       },
       "The Empress": {
-        up: "Fruitfulness, initiative, abundance, creative growth.",
-        rx: "Truth revealed, delays unraveling, vacillation."
+        up: "Growth, abundance, creativity, care, and life becoming fuller.",
+        rx: "Blocked growth, confusion clearing, or nurture becoming uneven."
       },
       "The Emperor": {
-        up: "Stability, power, protection, authority, will.",
-        rx: "Immaturity, obstruction, rigidity, weak authority."
+        up: "Stable authority, structure, protection, and control.",
+        rx: "Weak, immature, or overly rigid authority."
       },
       "The Hierophant": {
-        up: "Tradition, institution, mercy, guidance, alliance.",
-        rx: "Society, concord, over-kindness, weakness."
+        up: "Tradition, institutions, guidance, and accepted rules.",
+        rx: "Weak guidance, over-kindness, or fitting in too much."
       },
       "The Lovers": {
-        up: "Attraction, love, beauty, union, choice.",
-        rx: "Frustrated union, failure, foolish designs, contradiction."
+        up: "Love, attraction, union, and an important choice.",
+        rx: "Mismatch, failed plans, or a bond that is not coming together."
       },
       "The Chariot": {
-        up: "Triumph, willpower, providence, conflict mastered.",
-        rx: "Defeat, quarrel, dispute, lack of control."
+        up: "Victory through willpower, direction, and control.",
+        rx: "Conflict, defeat, or losing control of the direction."
       },
       "Strength": {
-        up: "Courage, energy, patience, inner power.",
-        rx: "Weakness, discord, abuse of power, disgrace."
+        up: "Courage, inner power, patience, and gentle control.",
+        rx: "Weakness, low courage, or power being used badly."
       },
       "The Hermit": {
-        up: "Prudence, solitude, counsel, careful searching.",
-        rx: "Concealment, disguise, fear, overcaution."
+        up: "Solitude, caution, wisdom, and searching carefully.",
+        rx: "Hiding, fear, secrecy, or caution going too far."
       },
       "Wheel of Fortune": {
-        up: "Destiny, fortune, success, luck, turning point.",
-        rx: "Increase, excess, unstable fortune, repeated cycle."
+        up: "A turning point, luck, change, and fate moving things.",
+        rx: "Too much change, repeated cycles, or unstable luck."
       },
       "Justice": {
-        up: "Fairness, equity, truth, law, deserved outcome.",
-        rx: "Bias, severity, legal complications, unfairness."
+        up: "Fairness, truth, accountability, and consequences.",
+        rx: "Bias, unfairness, harsh judgment, or legal trouble."
       },
       "The Hanged Man": {
-        up: "Sacrifice, suspension, wisdom, new perspective.",
-        rx: "Selfishness, stagnation, pressure from the crowd."
+        up: "Waiting, sacrifice, surrender, and seeing things differently.",
+        rx: "Selfishness, stuckness, or pressure from the crowd."
       },
       "Death": {
-        up: "Ending, transformation, closure, major change.",
-        rx: "Inertia, lethargy, stagnation, hope blocked."
+        up: "An ending that creates a major transformation.",
+        rx: "Stagnation, resistance to change, or an ending that drags on."
       },
       "Temperance": {
-        up: "Moderation, balance, economy, accommodation.",
-        rx: "Disunion, competing interests, poor combination."
+        up: "Balance, moderation, patience, and mixing things well.",
+        rx: "Imbalance, bad timing, or pieces that do not blend well."
       },
       "The Devil": {
-        up: "Bondage, force, fatal attraction, shadow desire.",
-        rx: "Weakness, blindness, pettiness, harmful attachment."
+        up: "Attachment, temptation, obsession, or feeling chained to something.",
+        rx: "Weakness, blindness, or being stuck in a harmful pattern."
       },
       "The Tower": {
-        up: "Sudden upheaval, ruin, collapse, revelation.",
-        rx: "Oppression, imprisonment, tyranny, delayed collapse."
+        up: "Sudden collapse, shock, and the truth breaking through.",
+        rx: "Pressure, restriction, or a collapse that is being delayed."
       },
       "The Star": {
-        up: "Hope, renewal, bright prospects, healing.",
-        rx: "Arrogance, impotence, haughtiness, lost faith."
+        up: "Hope, healing, renewal, and a brighter future.",
+        rx: "Lost faith, arrogance, or hope feeling blocked."
       },
       "The Moon": {
-        up: "Illusion, danger, hidden enemies, fear, deception.",
-        rx: "Instability, silence, lesser deception, confusion fading."
+        up: "Confusion, fear, illusion, and things being unclear.",
+        rx: "Confusion fading, but the truth is still not fully clear."
       },
       "The Sun": {
-        up: "Happiness, contentment, success, vitality.",
-        rx: "Lesser happiness, delayed joy, dimmed success."
+        up: "Happiness, success, warmth, and things becoming clear.",
+        rx: "Still positive, but the joy or success is smaller or delayed."
       },
       "Judgement": {
-        up: "Renewal, awakening, outcome, change of position.",
-        rx: "Weakness, delay, self-doubt, unresolved decision."
+        up: "Awakening, renewal, and a final call to change.",
+        rx: "Delay, weakness, self-doubt, or a decision not fully made."
       },
       "The World": {
-        up: "Completion, success, reward, journey, wholeness.",
-        rx: "Stagnation, inertia, fixity, unfinished cycle."
+        up: "Completion, success, reward, and a cycle closing.",
+        rx: "Stagnation, unfinished business, or a cycle not fully closed."
       },
       "Ace of Wands": {
-        up: "Creation, enterprise, invention, beginning.",
-        rx: "Fall, decadence, ruin, clouded joy."
-      },
-      "2 of Wands": {
-        up: "Dominion, planning, wealth, future vision.",
-        rx: "Surprise, wonder, trouble, fear."
-      },
-      "3 of Wands": {
-        up: "Established strength, enterprise, trade, cooperation.",
-        rx: "End of troubles, suspension, disappointment easing."
-      },
-      "4 of Wands": {
-        up: "Harmony, prosperity, peace, celebration, refuge.",
-        rx: "Prosperity, increase, beauty, felicity."
-      },
-      "5 of Wands": {
-        up: "Competition, struggle, imitation, conflict.",
-        rx: "Disputes, trickery, contradiction, litigation."
-      },
-      "6 of Wands": {
-        up: "Victory, good news, recognition, hope crowned.",
-        rx: "Apprehension, delay, disloyalty, fear."
-      },
-      "7 of Wands": {
-        up: "Valour, competition, negotiation, advantage.",
-        rx: "Perplexity, embarrassment, anxiety, indecision."
-      },
-      "8 of Wands": {
-        up: "Speed, movement, messages, swift progress.",
-        rx: "Jealousy, disputes, quarrels, inner stings."
-      },
-      "9 of Wands": {
-        up: "Strength in opposition, defense, delay, resilience.",
-        rx: "Obstacles, adversity, calamity, exhaustion."
-      },
-      "10 of Wands": {
-        up: "Oppression, burden, success under weight.",
-        rx: "Difficulties, intrigues, contradictions, pressure."
-      },
-      "Page of Wands": {
-        up: "News, message, faithful envoy, fresh fire.",
-        rx: "Bad news, indecision, instability."
-      },
-      "Knight of Wands": {
-        up: "Departure, movement, flight, change of residence.",
-        rx: "Rupture, interruption, discord, division."
-      },
-      "Queen of Wands": {
-        up: "Magnetism, warmth, honour, success, confidence.",
-        rx: "Jealousy, opposition, deceit, constrained goodwill."
-      },
-      "King of Wands": {
-        up: "Honesty, leadership, bold nature, favourable force.",
-        rx: "Severity, austerity, tolerance, controlled force."
+        up: "A new spark, creative energy, and the start of action.",
+        rx: "Blocked energy, a false start, or excitement fading."
       },
       "Ace of Cups": {
-        up: "Joy, contentment, fertility, abundance, true heart.",
-        rx: "Instability, mutation, false heart, emotional shift."
-      },
-      "2 of Cups": {
-        up: "Love, friendship, union, sympathy, concord.",
-        rx: "Passion, imbalance, strained union."
-      },
-      "3 of Cups": {
-        up: "Merriment, fulfilment, healing, happy conclusion.",
-        rx: "Excess, dispatch, ending, physical pleasure."
-      },
-      "4 of Cups": {
-        up: "Weariness, aversion, discontent, mixed pleasure.",
-        rx: "Novelty, new relations, presage, fresh instruction."
-      },
-      "5 of Cups": {
-        up: "Loss, disappointment, inheritance, bitterness, what remains.",
-        rx: "News, alliances, return, ancestry, false projects."
-      },
-      "6 of Cups": {
-        up: "Memories, childhood, past happiness, vanished things.",
-        rx: "Future, renewal, what comes next."
-      },
-      "7 of Cups": {
-        up: "Imagination, illusion, fantasy, wishful images.",
-        rx: "Desire, will, determination, project."
-      },
-      "8 of Cups": {
-        up: "Abandonment, decline, leaving what mattered.",
-        rx: "Great joy, happiness, feasting."
-      },
-      "9 of Cups": {
-        up: "Contentment, satisfaction, success, pleasure.",
-        rx: "Truth, loyalty, liberty, imperfect satisfaction."
-      },
-      "10 of Cups": {
-        up: "Contentment, family happiness, perfected love, repose.",
-        rx: "False heart, indignation, violence, broken harmony."
-      },
-      "Page of Cups": {
-        up: "Message, reflection, study, tender imagination.",
-        rx: "Seduction, deception, inclination, artifice."
-      },
-      "Knight of Cups": {
-        up: "Arrival, invitation, proposal, approach.",
-        rx: "Trickery, fraud, subtlety, duplicity."
-      },
-      "Queen of Cups": {
-        up: "Loving intelligence, vision, devotion, happiness.",
-        rx: "Untrustworthy emotion, vice, dishonour, distortion."
-      },
-      "King of Cups": {
-        up: "Equity, responsibility, creative intelligence, support.",
-        rx: "Dishonesty, scandal, injustice, double-dealing."
+        up: "Joy, love, emotional opening, and a full heart.",
+        rx: "Emotional instability, change, or a heart that does not feel steady."
       },
       "Ace of Swords": {
-        up: "Triumph, force, clarity, conquest.",
-        rx: "Disastrous force, excess, multiplication, harsh outcome."
-      },
-      "2 of Swords": {
-        up: "Balance, conformity, armed peace, tension.",
-        rx: "Imposture, falsehood, duplicity, disloyalty."
-      },
-      "3 of Swords": {
-        up: "Separation, sorrow, rupture, removal.",
-        rx: "Confusion, disorder, error, mental distress."
-      },
-      "4 of Swords": {
-        up: "Retreat, rest, vigilance, solitude.",
-        rx: "Caution, economy, wise administration, precaution."
-      },
-      "5 of Swords": {
-        up: "Defeat, degradation, dishonour, loss.",
-        rx: "Sorrow, mourning, burial, unresolved defeat."
-      },
-      "6 of Swords": {
-        up: "Journey, transition, passage, route.",
-        rx: "Declaration, confession, publicity, proposal."
-      },
-      "7 of Swords": {
-        up: "Strategy, attempt, secrecy, uncertain plan.",
-        rx: "Counsel, instruction, slander, babbling."
-      },
-      "8 of Swords": {
-        up: "Restriction, crisis, bad news, constrained power.",
-        rx: "Disquiet, difficulty, opposition, accident."
-      },
-      "9 of Swords": {
-        up: "Anxiety, despair, delay, disappointment.",
-        rx: "Suspicion, doubt, shame, reasonable fear."
-      },
-      "10 of Swords": {
-        up: "Pain, ruin, affliction, ending.",
-        rx: "Temporary advantage, recovery, power, success."
-      },
-      "Page of Swords": {
-        up: "Vigilance, spying, examination, alertness.",
-        rx: "Unpreparedness, unforeseen trouble, sharper suspicion."
-      },
-      "Knight of Swords": {
-        up: "Skill, bravery, opposition, forceful action.",
-        rx: "Imprudence, incapacity, extravagance."
-      },
-      "Queen of Swords": {
-        up: "Independence, sorrow, separation, clear severity.",
-        rx: "Malice, deceit, bigotry, coldness."
-      },
-      "King of Swords": {
-        up: "Judgment, authority, law, command, intellect.",
-        rx: "Cruelty, perversity, bad intention, harsh judgment."
+        up: "Clarity, truth, force, and a strong breakthrough.",
+        rx: "Harsh truth, destructive force, or clarity used badly."
       },
       "Ace of Pentacles": {
-        up: "Prosperity, contentment, material opportunity, gold.",
-        rx: "Bad intelligence, wealth problems, prosperity with cost."
+        up: "Material opportunity, prosperity, and something real beginning.",
+        rx: "Wealth with problems, bad news, or an opportunity with a catch."
+      },
+      "2 of Wands": {
+        up: "Planning, future vision, and looking beyond the current place.",
+        rx: "Worry, surprise, or uncertainty about what comes next."
+      },
+      "2 of Cups": {
+        up: "Love, friendship, union, and mutual connection.",
+        rx: "Imbalance, strained connection, or passion without harmony."
+      },
+      "2 of Swords": {
+        up: "Tension, balance, and a blocked decision.",
+        rx: "Falsehood, duplicity, or peace that is not honest."
       },
       "2 of Pentacles": {
-        up: "Gaiety, juggling, messages, agitation.",
-        rx: "Forced enjoyment, paperwork, literalness, bad omen."
+        up: "Juggling, change, movement, and keeping things balanced.",
+        rx: "Forced cheer, paperwork, or stress hidden behind performance."
+      },
+      "3 of Wands": {
+        up: "Expansion, effort, trade, and progress beginning to show.",
+        rx: "Delay, disappointment easing, or progress slowing down."
+      },
+      "3 of Cups": {
+        up: "Celebration, friendship, healing, and a happy result.",
+        rx: "Excess, overdoing pleasure, or a celebration ending."
+      },
+      "3 of Swords": {
+        up: "Heartbreak, separation, sorrow, and painful truth.",
+        rx: "Confusion, mental distress, and pain becoming disordered."
       },
       "3 of Pentacles": {
-        up: "Skilled work, trade, craft, recognition.",
-        rx: "Mediocrity, pettiness, weak work, immaturity."
+        up: "Skilled work, craft, teamwork, and recognition.",
+        rx: "Weak work, immaturity, or effort that is not well developed."
+      },
+      "4 of Wands": {
+        up: "Peace, celebration, stability, and feeling at home.",
+        rx: "Still happiness, but it may be quieter or not fully settled."
+      },
+      "4 of Cups": {
+        up: "Boredom, dissatisfaction, and not feeling moved by what is offered.",
+        rx: "A new interest, new relation, or emotional freshness returning."
+      },
+      "4 of Swords": {
+        up: "Rest, retreat, recovery, and quiet watchfulness.",
+        rx: "Caution, careful planning, or recovery starting to move again."
       },
       "4 of Pentacles": {
-        up: "Possession, security, inheritance, holding on.",
-        rx: "Suspense, delay, opposition, blocked resources."
+        up: "Holding on, security, possession, and control of resources.",
+        rx: "Delay, blockage, or resources feeling stuck."
+      },
+      "5 of Wands": {
+        up: "Competition, conflict, and people clashing for position.",
+        rx: "Arguments, trickery, or conflict becoming messy."
+      },
+      "5 of Cups": {
+        up: "Loss, disappointment, and focusing on what went wrong.",
+        rx: "Return, news, reconnection, or something from the past coming back."
+      },
+      "5 of Swords": {
+        up: "Defeat, dishonor, loss, and a hollow victory.",
+        rx: "Sorrow, mourning, or defeat that still lingers."
       },
       "5 of Pentacles": {
-        up: "Material trouble, poverty, exclusion, hardship.",
-        rx: "Disorder, chaos, ruin, discord."
+        up: "Hardship, poverty, exclusion, and material trouble.",
+        rx: "Chaos, disorder, and difficulty becoming unstable."
+      },
+      "6 of Wands": {
+        up: "Victory, recognition, good news, and public success.",
+        rx: "Delay, fear, disloyalty, or success not feeling secure."
+      },
+      "6 of Cups": {
+        up: "Memory, childhood, nostalgia, and happiness from the past.",
+        rx: "The future opening up instead of staying in old memories."
+      },
+      "6 of Swords": {
+        up: "Transition, travel, and moving from trouble toward calmer waters.",
+        rx: "Confession, publicity, or a truth coming out."
       },
       "6 of Pentacles": {
-        up: "Gifts, generosity, prosperity, fair exchange.",
-        rx: "Cupidity, envy, jealousy, illusion."
+        up: "Giving, receiving, generosity, and uneven power around resources.",
+        rx: "Envy, greed, jealousy, or generosity becoming selfish."
+      },
+      "7 of Wands": {
+        up: "Defending a position and standing strong under pressure.",
+        rx: "Anxiety, confusion, or feeling overwhelmed by the fight."
+      },
+      "7 of Cups": {
+        up: "Fantasy, illusion, many options, and unclear desire.",
+        rx: "Desire becoming more focused and a plan starting to form."
+      },
+      "7 of Swords": {
+        up: "Secrecy, strategy, hidden plans, or avoiding direct conflict.",
+        rx: "Counsel, exposure, gossip, or a secret being discussed."
       },
       "7 of Pentacles": {
-        up: "Work, money, patience, uncertain reward.",
-        rx: "Anxiety over money, impatience, suspicion."
+        up: "Waiting, investment, patience, and uncertain reward.",
+        rx: "Money worry, impatience, or anxiety about results."
+      },
+      "8 of Wands": {
+        up: "Speed, movement, messages, and things happening fast.",
+        rx: "Delays, arguments, jealousy, or mixed signals."
+      },
+      "8 of Cups": {
+        up: "Leaving behind something that no longer feels fulfilling.",
+        rx: "Joy, satisfaction, or staying where happiness can return."
+      },
+      "8 of Swords": {
+        up: "Restriction, fear, and feeling trapped by circumstances.",
+        rx: "Trouble, opposition, and restriction becoming unstable."
       },
       "8 of Pentacles": {
-        up: "Work, craftsmanship, skill, employment.",
-        rx: "Vanity, ambition voided, cunning, poor craft."
+        up: "Work, practice, craftsmanship, and building skill.",
+        rx: "Poor craft, wasted ambition, or skill used in a sneaky way."
+      },
+      "9 of Wands": {
+        up: "Endurance, defense, and staying strong after difficulty.",
+        rx: "Obstacles, exhaustion, and feeling worn down."
+      },
+      "9 of Cups": {
+        up: "Satisfaction, comfort, success, and emotional pleasure.",
+        rx: "Mixed satisfaction, where something is good but not perfect."
+      },
+      "9 of Swords": {
+        up: "Anxiety, despair, worry, and sleepless fear.",
+        rx: "Suspicion, shame, doubt, or fear that has a reason."
       },
       "9 of Pentacles": {
-        up: "Prudence, safety, accomplishment, discernment.",
-        rx: "Deception, bad faith, voided project."
+        up: "Independence, comfort, safety, and earned success.",
+        rx: "Deception, bad faith, or a plan that does not work out."
+      },
+      "10 of Wands": {
+        up: "Burden, pressure, and carrying too much.",
+        rx: "Difficulty, contradiction, and pressure becoming tangled."
+      },
+      "10 of Cups": {
+        up: "Emotional happiness, family peace, and love feeling complete.",
+        rx: "Broken harmony, false peace, or emotional tension at home."
+      },
+      "10 of Swords": {
+        up: "Painful ending, defeat, and reaching the lowest point.",
+        rx: "Temporary recovery, a small advantage, or pain starting to lift."
       },
       "10 of Pentacles": {
-        up: "Wealth, family, legacy, house, inheritance.",
-        rx: "Chance, loss, robbery, unstable fortune."
+        up: "Family, wealth, legacy, home, and long-term security.",
+        rx: "Loss, risk, unstable fortune, or family money trouble."
+      },
+      "Page of Wands": {
+        up: "A message, new enthusiasm, and young creative energy.",
+        rx: "Bad news, indecision, or unstable enthusiasm."
+      },
+      "Page of Cups": {
+        up: "A soft message, imagination, reflection, and young emotion.",
+        rx: "Deception, seduction, or emotions becoming immature."
+      },
+      "Page of Swords": {
+        up: "Watching, checking, curiosity, and alert mental energy.",
+        rx: "Unpreparedness, spying gone wrong, or unexpected trouble."
       },
       "Page of Pentacles": {
-        up: "Study, application, scholarship, practical news.",
-        rx: "Prodigality, dissipation, luxury, bad news."
+        up: "Study, learning, practical news, and a new material goal.",
+        rx: "Waste, laziness, luxury, or bad practical news."
+      },
+      "Knight of Wands": {
+        up: "Movement, departure, travel, and restless fire.",
+        rx: "Interruption, conflict, rupture, or movement breaking apart."
+      },
+      "Knight of Cups": {
+        up: "An offer, invitation, approach, or romantic movement.",
+        rx: "Charm hiding trickery, fraud, or mixed motives."
+      },
+      "Knight of Swords": {
+        up: "Speed, conflict, bravery, and forceful action.",
+        rx: "Recklessness, poor judgment, or force without skill."
       },
       "Knight of Pentacles": {
-        up: "Service, responsibility, utility, steady work.",
-        rx: "Inertia, idleness, stagnation, carelessness."
+        up: "Steady work, responsibility, usefulness, and reliability.",
+        rx: "Stagnation, idleness, boredom, or slow energy stuck."
+      },
+      "Queen of Wands": {
+        up: "Confidence, warmth, magnetism, and creative strength.",
+        rx: "Jealousy, opposition, or warmth turning unreliable."
+      },
+      "Queen of Cups": {
+        up: "Loving intuition, emotional depth, and caring wisdom.",
+        rx: "Emotion becoming unreliable, distorted, or hard to trust."
+      },
+      "Queen of Swords": {
+        up: "Independence, clear judgment, grief, and sharp truth.",
+        rx: "Cruelty, deceit, bitterness, or truth turned cold."
       },
       "Queen of Pentacles": {
-        up: "Opulence, generosity, security, magnificence.",
-        rx: "Suspicion, suspense, fear, mistrust."
+        up: "Comfort, security, generosity, and grounded care.",
+        rx: "Suspicion, fear, mistrust, or comfort becoming insecure."
+      },
+      "King of Wands": {
+        up: "Bold leadership, honesty, vision, and strong fire.",
+        rx: "Severity, controlled force, or leadership becoming too hard."
+      },
+      "King of Cups": {
+        up: "Emotional maturity, fairness, responsibility, and calm support.",
+        rx: "Dishonesty, emotional manipulation, or unfairness."
+      },
+      "King of Swords": {
+        up: "Law, authority, intellect, and strong judgment.",
+        rx: "Cruelty, bad intent, or authority used harshly."
       },
       "King of Pentacles": {
-        up: "Business, success, mastery, practical intelligence.",
-        rx: "Vice, weakness, corruption, material danger."
+        up: "Business success, stability, mastery, and practical power.",
+        rx: "Greed, corruption, weakness, or material power used badly."
       }
     };
 
@@ -727,8 +740,11 @@
 
     const state = {
       drawn: 0,
-      logged: 0
+      logged: 0,
+      results: []
     };
+
+    let copyResetTimer = 0;
 
     const MAX_LOGGED_CARDS = FULL_DECK.length;
 
@@ -736,6 +752,8 @@
       board: document.getElementById("board"),
       count: document.getElementById("count"),
       current: document.getElementById("current"),
+      copy: document.getElementById("copy"),
+      copyText: document.getElementById("copyText"),
       log: document.getElementById("log"),
       logLimit: document.getElementById("logLimit"),
       logSection: document.getElementById("logSection"),
@@ -757,6 +775,11 @@
       el.count.textContent = state.drawn + " / 156";
     }
 
+    function setCopyState(label) {
+      el.copy.disabled = state.results.length === 0;
+      el.copyText.textContent = label || "copy";
+    }
+
     function clearCurrent() {
       el.current.style.borderTopColor = "var(--line)";
       el.current.replaceChildren(textNode("div", "empty", "draw"));
@@ -771,6 +794,11 @@
 
     function displayName(card) {
       return card.name.replace(/^The /, "");
+    }
+
+    function copyLine(card) {
+      const suffix = card.reversed ? " rx" : "";
+      return displayName(card).toLowerCase() + suffix;
     }
 
     function showCurrent(card, color) {
@@ -824,15 +852,56 @@
       dot.setAttribute("aria-label", name + ", " + (card.reversed ? "reversed" : "upright") + ", drawn");
 
       state.drawn += 1;
+      state.results.push(card);
       setCount();
+      setCopyState();
       showCurrent(card, color);
       addToLog(card, color);
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      return copied;
+    }
+
+    async function copyResults() {
+      if (state.results.length === 0) {
+        return;
+      }
+
+      const text = state.results.map(copyLine).join("\n");
+      let copied = false;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        } else {
+          copied = fallbackCopy(text);
+        }
+      } catch (error) {
+        copied = fallbackCopy(text);
+      }
+
+      window.clearTimeout(copyResetTimer);
+      setCopyState(copied ? "copied" : "copy failed");
+      copyResetTimer = window.setTimeout(() => setCopyState(), 1200);
     }
 
     function init() {
       state.drawn = 0;
       state.logged = 0;
+      state.results = [];
       setCount();
+      setCopyState();
       clearCurrent();
 
       el.board.replaceChildren();
@@ -856,6 +925,7 @@
     }
 
     el.reset.addEventListener("click", init);
+    el.copy.addEventListener("click", copyResults);
     init();
   </script>
 </body>
