@@ -9,3 +9,7 @@ A dependency-free static tarot draw website for Vercel.
 3. Use the default static site settings. There is no build command and no install step required.
 
 The site entry point is `index.html`.
+
+## Meaning Notes
+
+The upright and reversed one-liners are neutral keyword-style summaries grounded in Rider-Waite-Smith card meanings, especially A. E. Waite's *The Pictorial Key to the Tarot*. They are written as plain meanings, not advice prompts.

@@ -251,10 +251,10 @@
     .log-row {
       display: grid;
       grid-template-columns: 24px minmax(0, 1fr) 42px;
-      align-items: center;
+      align-items: start;
       gap: 10px;
-      min-height: 38px;
-      padding: 8px 12px;
+      min-height: 48px;
+      padding: 9px 12px;
       background: var(--panel);
       border: 1px solid var(--line);
       border-left: 3px solid var(--line);
@@ -264,6 +264,13 @@
     .log-number {
       color: var(--muted);
       font-size: 10px;
+      padding-top: 2px;
+    }
+
+    .log-body {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
     }
 
     .log-name {
@@ -275,11 +282,21 @@
       line-height: 1.2;
     }
 
+    .log-meaning {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
     .log-orientation {
       font-size: 10px;
       letter-spacing: 0.06em;
       text-align: right;
       white-space: nowrap;
+      padding-top: 2px;
     }
 
     .log-limit {
@@ -339,7 +356,7 @@
     <section class="log-section" id="logSection" aria-label="Pulled cards">
       <div class="log-label">pulled cards</div>
       <div class="log" id="log"></div>
-      <div class="log-limit" id="logLimit">21 card limit reached</div>
+      <div class="log-limit" id="logLimit">all 156 cards drawn</div>
     </section>
   </main>
 
@@ -380,6 +397,321 @@
       reversed: "#e59b2a"
     };
 
+    const CARD_MEANINGS = {
+      "The Fool": {
+        up: "Innocence, freedom, folly, reckless beginnings.",
+        rx: "Negligence, carelessness, apathy, vanity."
+      },
+      "The Magician": {
+        up: "Skill, willpower, diplomacy, focused action.",
+        rx: "Disquiet, disgrace, manipulation, scattered will."
+      },
+      "The High Priestess": {
+        up: "Mystery, hidden knowledge, intuition, silence.",
+        rx: "Surface knowledge, conceit, passion, secrets exposed."
+      },
+      "The Empress": {
+        up: "Fruitfulness, initiative, abundance, creative growth.",
+        rx: "Truth revealed, delays unraveling, vacillation."
+      },
+      "The Emperor": {
+        up: "Stability, power, protection, authority, will.",
+        rx: "Immaturity, obstruction, rigidity, weak authority."
+      },
+      "The Hierophant": {
+        up: "Tradition, institution, mercy, guidance, alliance.",
+        rx: "Society, concord, over-kindness, weakness."
+      },
+      "The Lovers": {
+        up: "Attraction, love, beauty, union, choice.",
+        rx: "Frustrated union, failure, foolish designs, contradiction."
+      },
+      "The Chariot": {
+        up: "Triumph, willpower, providence, conflict mastered.",
+        rx: "Defeat, quarrel, dispute, lack of control."
+      },
+      "Strength": {
+        up: "Courage, energy, patience, inner power.",
+        rx: "Weakness, discord, abuse of power, disgrace."
+      },
+      "The Hermit": {
+        up: "Prudence, solitude, counsel, careful searching.",
+        rx: "Concealment, disguise, fear, overcaution."
+      },
+      "Wheel of Fortune": {
+        up: "Destiny, fortune, success, luck, turning point.",
+        rx: "Increase, excess, unstable fortune, repeated cycle."
+      },
+      "Justice": {
+        up: "Fairness, equity, truth, law, deserved outcome.",
+        rx: "Bias, severity, legal complications, unfairness."
+      },
+      "The Hanged Man": {
+        up: "Sacrifice, suspension, wisdom, new perspective.",
+        rx: "Selfishness, stagnation, pressure from the crowd."
+      },
+      "Death": {
+        up: "Ending, transformation, closure, major change.",
+        rx: "Inertia, lethargy, stagnation, hope blocked."
+      },
+      "Temperance": {
+        up: "Moderation, balance, economy, accommodation.",
+        rx: "Disunion, competing interests, poor combination."
+      },
+      "The Devil": {
+        up: "Bondage, force, fatal attraction, shadow desire.",
+        rx: "Weakness, blindness, pettiness, harmful attachment."
+      },
+      "The Tower": {
+        up: "Sudden upheaval, ruin, collapse, revelation.",
+        rx: "Oppression, imprisonment, tyranny, delayed collapse."
+      },
+      "The Star": {
+        up: "Hope, renewal, bright prospects, healing.",
+        rx: "Arrogance, impotence, haughtiness, lost faith."
+      },
+      "The Moon": {
+        up: "Illusion, danger, hidden enemies, fear, deception.",
+        rx: "Instability, silence, lesser deception, confusion fading."
+      },
+      "The Sun": {
+        up: "Happiness, contentment, success, vitality.",
+        rx: "Lesser happiness, delayed joy, dimmed success."
+      },
+      "Judgement": {
+        up: "Renewal, awakening, outcome, change of position.",
+        rx: "Weakness, delay, self-doubt, unresolved decision."
+      },
+      "The World": {
+        up: "Completion, success, reward, journey, wholeness.",
+        rx: "Stagnation, inertia, fixity, unfinished cycle."
+      },
+      "Ace of Wands": {
+        up: "Creation, enterprise, invention, beginning.",
+        rx: "Fall, decadence, ruin, clouded joy."
+      },
+      "2 of Wands": {
+        up: "Dominion, planning, wealth, future vision.",
+        rx: "Surprise, wonder, trouble, fear."
+      },
+      "3 of Wands": {
+        up: "Established strength, enterprise, trade, cooperation.",
+        rx: "End of troubles, suspension, disappointment easing."
+      },
+      "4 of Wands": {
+        up: "Harmony, prosperity, peace, celebration, refuge.",
+        rx: "Prosperity, increase, beauty, felicity."
+      },
+      "5 of Wands": {
+        up: "Competition, struggle, imitation, conflict.",
+        rx: "Disputes, trickery, contradiction, litigation."
+      },
+      "6 of Wands": {
+        up: "Victory, good news, recognition, hope crowned.",
+        rx: "Apprehension, delay, disloyalty, fear."
+      },
+      "7 of Wands": {
+        up: "Valour, competition, negotiation, advantage.",
+        rx: "Perplexity, embarrassment, anxiety, indecision."
+      },
+      "8 of Wands": {
+        up: "Speed, movement, messages, swift progress.",
+        rx: "Jealousy, disputes, quarrels, inner stings."
+      },
+      "9 of Wands": {
+        up: "Strength in opposition, defense, delay, resilience.",
+        rx: "Obstacles, adversity, calamity, exhaustion."
+      },
+      "10 of Wands": {
+        up: "Oppression, burden, success under weight.",
+        rx: "Difficulties, intrigues, contradictions, pressure."
+      },
+      "Page of Wands": {
+        up: "News, message, faithful envoy, fresh fire.",
+        rx: "Bad news, indecision, instability."
+      },
+      "Knight of Wands": {
+        up: "Departure, movement, flight, change of residence.",
+        rx: "Rupture, interruption, discord, division."
+      },
+      "Queen of Wands": {
+        up: "Magnetism, warmth, honour, success, confidence.",
+        rx: "Jealousy, opposition, deceit, constrained goodwill."
+      },
+      "King of Wands": {
+        up: "Honesty, leadership, bold nature, favourable force.",
+        rx: "Severity, austerity, tolerance, controlled force."
+      },
+      "Ace of Cups": {
+        up: "Joy, contentment, fertility, abundance, true heart.",
+        rx: "Instability, mutation, false heart, emotional shift."
+      },
+      "2 of Cups": {
+        up: "Love, friendship, union, sympathy, concord.",
+        rx: "Passion, imbalance, strained union."
+      },
+      "3 of Cups": {
+        up: "Merriment, fulfilment, healing, happy conclusion.",
+        rx: "Excess, dispatch, ending, physical pleasure."
+      },
+      "4 of Cups": {
+        up: "Weariness, aversion, discontent, mixed pleasure.",
+        rx: "Novelty, new relations, presage, fresh instruction."
+      },
+      "5 of Cups": {
+        up: "Loss, disappointment, inheritance, bitterness, what remains.",
+        rx: "News, alliances, return, ancestry, false projects."
+      },
+      "6 of Cups": {
+        up: "Memories, childhood, past happiness, vanished things.",
+        rx: "Future, renewal, what comes next."
+      },
+      "7 of Cups": {
+        up: "Imagination, illusion, fantasy, wishful images.",
+        rx: "Desire, will, determination, project."
+      },
+      "8 of Cups": {
+        up: "Abandonment, decline, leaving what mattered.",
+        rx: "Great joy, happiness, feasting."
+      },
+      "9 of Cups": {
+        up: "Contentment, satisfaction, success, pleasure.",
+        rx: "Truth, loyalty, liberty, imperfect satisfaction."
+      },
+      "10 of Cups": {
+        up: "Contentment, family happiness, perfected love, repose.",
+        rx: "False heart, indignation, violence, broken harmony."
+      },
+      "Page of Cups": {
+        up: "Message, reflection, study, tender imagination.",
+        rx: "Seduction, deception, inclination, artifice."
+      },
+      "Knight of Cups": {
+        up: "Arrival, invitation, proposal, approach.",
+        rx: "Trickery, fraud, subtlety, duplicity."
+      },
+      "Queen of Cups": {
+        up: "Loving intelligence, vision, devotion, happiness.",
+        rx: "Untrustworthy emotion, vice, dishonour, distortion."
+      },
+      "King of Cups": {
+        up: "Equity, responsibility, creative intelligence, support.",
+        rx: "Dishonesty, scandal, injustice, double-dealing."
+      },
+      "Ace of Swords": {
+        up: "Triumph, force, clarity, conquest.",
+        rx: "Disastrous force, excess, multiplication, harsh outcome."
+      },
+      "2 of Swords": {
+        up: "Balance, conformity, armed peace, tension.",
+        rx: "Imposture, falsehood, duplicity, disloyalty."
+      },
+      "3 of Swords": {
+        up: "Separation, sorrow, rupture, removal.",
+        rx: "Confusion, disorder, error, mental distress."
+      },
+      "4 of Swords": {
+        up: "Retreat, rest, vigilance, solitude.",
+        rx: "Caution, economy, wise administration, precaution."
+      },
+      "5 of Swords": {
+        up: "Defeat, degradation, dishonour, loss.",
+        rx: "Sorrow, mourning, burial, unresolved defeat."
+      },
+      "6 of Swords": {
+        up: "Journey, transition, passage, route.",
+        rx: "Declaration, confession, publicity, proposal."
+      },
+      "7 of Swords": {
+        up: "Strategy, attempt, secrecy, uncertain plan.",
+        rx: "Counsel, instruction, slander, babbling."
+      },
+      "8 of Swords": {
+        up: "Restriction, crisis, bad news, constrained power.",
+        rx: "Disquiet, difficulty, opposition, accident."
+      },
+      "9 of Swords": {
+        up: "Anxiety, despair, delay, disappointment.",
+        rx: "Suspicion, doubt, shame, reasonable fear."
+      },
+      "10 of Swords": {
+        up: "Pain, ruin, affliction, ending.",
+        rx: "Temporary advantage, recovery, power, success."
+      },
+      "Page of Swords": {
+        up: "Vigilance, spying, examination, alertness.",
+        rx: "Unpreparedness, unforeseen trouble, sharper suspicion."
+      },
+      "Knight of Swords": {
+        up: "Skill, bravery, opposition, forceful action.",
+        rx: "Imprudence, incapacity, extravagance."
+      },
+      "Queen of Swords": {
+        up: "Independence, sorrow, separation, clear severity.",
+        rx: "Malice, deceit, bigotry, coldness."
+      },
+      "King of Swords": {
+        up: "Judgment, authority, law, command, intellect.",
+        rx: "Cruelty, perversity, bad intention, harsh judgment."
+      },
+      "Ace of Pentacles": {
+        up: "Prosperity, contentment, material opportunity, gold.",
+        rx: "Bad intelligence, wealth problems, prosperity with cost."
+      },
+      "2 of Pentacles": {
+        up: "Gaiety, juggling, messages, agitation.",
+        rx: "Forced enjoyment, paperwork, literalness, bad omen."
+      },
+      "3 of Pentacles": {
+        up: "Skilled work, trade, craft, recognition.",
+        rx: "Mediocrity, pettiness, weak work, immaturity."
+      },
+      "4 of Pentacles": {
+        up: "Possession, security, inheritance, holding on.",
+        rx: "Suspense, delay, opposition, blocked resources."
+      },
+      "5 of Pentacles": {
+        up: "Material trouble, poverty, exclusion, hardship.",
+        rx: "Disorder, chaos, ruin, discord."
+      },
+      "6 of Pentacles": {
+        up: "Gifts, generosity, prosperity, fair exchange.",
+        rx: "Cupidity, envy, jealousy, illusion."
+      },
+      "7 of Pentacles": {
+        up: "Work, money, patience, uncertain reward.",
+        rx: "Anxiety over money, impatience, suspicion."
+      },
+      "8 of Pentacles": {
+        up: "Work, craftsmanship, skill, employment.",
+        rx: "Vanity, ambition voided, cunning, poor craft."
+      },
+      "9 of Pentacles": {
+        up: "Prudence, safety, accomplishment, discernment.",
+        rx: "Deception, bad faith, voided project."
+      },
+      "10 of Pentacles": {
+        up: "Wealth, family, legacy, house, inheritance.",
+        rx: "Chance, loss, robbery, unstable fortune."
+      },
+      "Page of Pentacles": {
+        up: "Study, application, scholarship, practical news.",
+        rx: "Prodigality, dissipation, luxury, bad news."
+      },
+      "Knight of Pentacles": {
+        up: "Service, responsibility, utility, steady work.",
+        rx: "Inertia, idleness, stagnation, carelessness."
+      },
+      "Queen of Pentacles": {
+        up: "Opulence, generosity, security, magnificence.",
+        rx: "Suspicion, suspense, fear, mistrust."
+      },
+      "King of Pentacles": {
+        up: "Business, success, mastery, practical intelligence.",
+        rx: "Vice, weakness, corruption, material danger."
+      }
+    };
+
     const BASE_CARDS = [
       ...MAJORS.map((name) => ({ name, suit: "major" })),
       ...RANKS.flatMap((rank) => SUITS.map((suit) => ({
@@ -389,14 +721,16 @@
     ];
 
     const FULL_DECK = BASE_CARDS.flatMap((card) => [
-      { ...card, reversed: false },
-      { ...card, reversed: true }
+      { ...card, reversed: false, meaning: CARD_MEANINGS[card.name].up },
+      { ...card, reversed: true, meaning: CARD_MEANINGS[card.name].rx }
     ]);
 
     const state = {
       drawn: 0,
       logged: 0
     };
+
+    const MAX_LOGGED_CARDS = FULL_DECK.length;
 
     const el = {
       board: document.getElementById("board"),
@@ -435,8 +769,12 @@
       return node;
     }
 
+    function displayName(card) {
+      return card.name.replace(/^The /, "");
+    }
+
     function showCurrent(card, color) {
-      const name = textNode("div", "card-name", card.name);
+      const name = textNode("div", "card-name", displayName(card));
       const orientation = textNode("div", "orientation", card.reversed ? "reversed" : "upright");
 
       orientation.style.color = card.reversed ? COLORS.reversed : color;
@@ -445,7 +783,7 @@
     }
 
     function addToLog(card, color) {
-      if (state.logged === 21) {
+      if (state.logged === MAX_LOGGED_CARDS) {
         return;
       }
 
@@ -457,14 +795,18 @@
       row.style.borderLeftColor = color;
 
       const number = textNode("div", "log-number", String(state.logged));
-      const name = textNode("div", "log-name", card.name);
+      const body = document.createElement("div");
+      body.className = "log-body";
+      const name = textNode("div", "log-name", displayName(card));
+      const meaning = textNode("div", "log-meaning", card.meaning);
       const orientation = textNode("div", "log-orientation", card.reversed ? "rx" : "up");
       orientation.style.color = card.reversed ? COLORS.reversed : color;
 
-      row.append(number, name, orientation);
+      body.append(name, meaning);
+      row.append(number, body, orientation);
       el.log.appendChild(row);
 
-      if (state.logged === 21) {
+      if (state.logged === MAX_LOGGED_CARDS) {
         el.logLimit.style.display = "block";
       }
     }
@@ -475,10 +817,11 @@
       }
 
       const color = COLORS[card.suit];
+      const name = displayName(card);
 
       dot.disabled = true;
       dot.style.backgroundColor = color;
-      dot.setAttribute("aria-label", card.name + ", " + (card.reversed ? "reversed" : "upright") + ", drawn");
+      dot.setAttribute("aria-label", name + ", " + (card.reversed ? "reversed" : "upright") + ", drawn");
 
       state.drawn += 1;
       setCount();
